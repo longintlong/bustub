@@ -80,7 +80,7 @@ Page *BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) {
   frame_id_t frame_id = -1;
   std::lock_guard<std::mutex> lock(latch_);
 
-  if (free_list_.size() > 0) {
+  if (!free_list_.empty()) {
     frame_id = free_list_.front();
     r = pages_ + frame_id;
     free_list_.pop_front();
@@ -99,7 +99,7 @@ Page *BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) {
       r->is_dirty_ = false;
     }
   }
-  if (r) {
+  if (r != nullptr) {
     page_table_[new_pg_id] = frame_id;
     *page_id = new_pg_id;
     r->page_id_ = new_pg_id;
@@ -122,13 +122,13 @@ Page *BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) {
   frame_id_t frame_id = -1;
   Page *r = nullptr;
   // P exists
-  if (page_table_.count(page_id)) {
+  if (page_table_.count(page_id) != 0) {
     frame_id = page_table_[page_id];
     r = pages_ + frame_id;
     return r;
   }
 
-  if (free_list_.size() > 0) {
+  if (!free_list_.empty()) {
     frame_id = free_list_.front();
     r = pages_ + frame_id;
     free_list_.pop_front();
@@ -149,7 +149,7 @@ Page *BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) {
       r->is_dirty_ = false;
     }
   }
-  if (r) {
+  if (r != nullptr) {
     page_table_[page_id] = frame_id;
     ++r->pin_count_;
     replacer_->Pin(frame_id);
@@ -194,14 +194,15 @@ bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) {
   frame_id_t frame_id = page_table_[page_id];
   Page *r = pages_ + frame_id;
 
-  if (is_dirty) r->is_dirty_ = true;
+  if (is_dirty) {
+    r->is_dirty_ = true;
+  }
   int pin_count = r->pin_count_;
   --r->pin_count_;
   if (r->pin_count_ <= 0) {
     replacer_->Unpin(frame_id);
   }
-  if (pin_count <= 0) return false;
-  return true;
+  return pin_count > 0;
 }
 
 page_id_t BufferPoolManagerInstance::AllocatePage() {

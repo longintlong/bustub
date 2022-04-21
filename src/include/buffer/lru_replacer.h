@@ -48,9 +48,9 @@ class LRUReplacer : public Replacer {
 
  private:
   // TODO(student): implement me!
-  void LRU_Append(frame_id_t frame_id);
+  void LruAppend(frame_id_t frame_id);
 
-  void LRU_Remove(frame_id_t frame_id);
+  void LruRemove(frame_id_t frame_id);
 
   void MoveToHead(frame_id_t frame_id);
 
