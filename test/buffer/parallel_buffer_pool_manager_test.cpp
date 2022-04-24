@@ -15,13 +15,14 @@
 #include <random>
 #include <string>
 #include "buffer/buffer_pool_manager.h"
+#include "common/logger.h"
 #include "gtest/gtest.h"
 
 namespace bustub {
 
 // NOLINTNEXTLINE
 // Check whether pages containing terminal characters can be recovered
-TEST(ParallelBufferPoolManagerTest, DISABLED_BinaryDataTest) {
+TEST(ParallelBufferPoolManagerTest, BinaryDataTest) {
   const std::string db_name = "test.db";
   const size_t buffer_pool_size = 10;
   const size_t num_instances = 5;
@@ -88,7 +89,7 @@ TEST(ParallelBufferPoolManagerTest, DISABLED_BinaryDataTest) {
 }
 
 // NOLINTNEXTLINE
-TEST(ParallelBufferPoolManagerTest, DISABLED_SampleTest) {
+TEST(ParallelBufferPoolManagerTest, SampleTest) {
   const std::string db_name = "test.db";
   const size_t buffer_pool_size = 10;
   const size_t num_instances = 5;
@@ -127,6 +128,7 @@ TEST(ParallelBufferPoolManagerTest, DISABLED_SampleTest) {
   // there would still be one buffer page left for reading page 4.
 
   for (int i = 0; i < 5; ++i) {
+    LOG_DEBUG("%d\n", i);
     EXPECT_EQ(true, bpm->UnpinPage(i, true));
   }
   for (int i = 0; i < 4; ++i) {

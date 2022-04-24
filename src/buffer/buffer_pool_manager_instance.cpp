@@ -75,7 +75,6 @@ Page *BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) {
   // 2.   Pick a victim page P from either the free list or the replacer. Always pick from the free list first.
   // 3.   Update P's metadata, zero out memory and add P to the page table.
   // 4.   Set the page ID output parameter. Return a pointer to P.
-  page_id_t new_pg_id = AllocatePage();
   Page *r = nullptr;
   frame_id_t frame_id = -1;
   std::lock_guard<std::mutex> lock(latch_);
@@ -94,12 +93,13 @@ Page *BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) {
       }
       page_table_.erase(r->page_id_);
       r->ResetMemory();
-      r->page_id_ = new_pg_id;
+      r->page_id_ = INVALID_PAGE_ID;
       r->pin_count_ = 0;
       r->is_dirty_ = false;
     }
   }
   if (r != nullptr) {
+    page_id_t new_pg_id = AllocatePage();
     page_table_[new_pg_id] = frame_id;
     *page_id = new_pg_id;
     r->page_id_ = new_pg_id;
@@ -125,6 +125,8 @@ Page *BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) {
   if (page_table_.count(page_id) != 0) {
     frame_id = page_table_[page_id];
     r = pages_ + frame_id;
+    ++r->pin_count_;
+    replacer_->Pin(frame_id);
     return r;
   }
 
